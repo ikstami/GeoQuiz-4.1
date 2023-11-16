@@ -37,16 +37,36 @@ class MainActivity : AppCompatActivity() {
         nextButton = findViewById(R.id.next_button)
         questionTextView = findViewById(R.id.question_text_view)
 
-        trueButton.setOnClickListener { view: View ->
+        trueButton.setOnClickListener { view: View ->  //НАЖАТИЕ TRUE BUTTON
 // Что-то выполнить после нажатия
-            checkAnswer(true) }
+            checkAnswer(true)
+           //falseButton.isEnabled = false
+           // trueButton.isEnabled = false
+            trueButton.setVisibility(View.INVISIBLE);
+            falseButton.setVisibility(View.INVISIBLE);
+            }
 
-        falseButton.setOnClickListener { view: View ->
+        falseButton.setOnClickListener { view: View ->  //НАЖАТИЕ FALSE BUTTON
 // Что-то выполнить после нажатия
-            checkAnswer(false) }
-        nextButton.setOnClickListener {
+            checkAnswer(false);
+           // falseButton.isEnabled = false;
+            //trueButton.isEnabled = false;
+            falseButton.setVisibility(View.INVISIBLE);
+            trueButton.setVisibility(View.INVISIBLE);
+            }
+
+        nextButton.setOnClickListener {     //НАЖАТИЕ NEXT BUTTON
             quizViewModel.moveToNext()
+            trueButton.setVisibility(View.VISIBLE);
+            falseButton.setVisibility(View.VISIBLE);
+            if(quizViewModel.currentIndex==5)
+            {
+                nextButton.isEnabled = false
+                //nextButton.setVisibility(View.INVISIBLE);
+            }
             updateQuestion()
+
+
         }
 
         updateQuestion()
@@ -89,14 +109,26 @@ class MainActivity : AppCompatActivity() {
             questionTextView.setText(questionTextResId)
         }
 
-    private fun checkAnswer(userAnswer:
-                            Boolean) {
-        val correctAnswer = quizViewModel.currentQuestionAnswer
+    var results = 0;
+    private fun checkAnswer(userAnswer: Boolean) {
+        val correctAnswer = quizViewModel.currentQuestionAnswer;
         val messageResId = if (userAnswer == correctAnswer) {
             R.string.correct_toast
         } else { R.string.incorrect_toast }
 
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show()
+
+        if (userAnswer == correctAnswer)
+        {
+            results++
+        }
+        if(quizViewModel.currentIndex==5)
+        {
+            Toast.makeText(this, "Correct ansewers = " + results, Toast.LENGTH_SHORT).show()
+        }
+
+
+
     }
 
 
