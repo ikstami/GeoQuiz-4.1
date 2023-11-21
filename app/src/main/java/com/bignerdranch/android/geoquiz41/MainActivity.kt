@@ -1,5 +1,6 @@
 package com.bignerdranch.android.geoquiz41
 
+import android.app.Activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -41,21 +42,30 @@ class MainActivity : AppCompatActivity() {
 
         trueButton.setOnClickListener { view: View ->  //НАЖАТИЕ TRUE BUTTON
 // Что-то выполнить после нажатия
-            checkAnswer(true)
-           //falseButton.isEnabled = false
-           // trueButton.isEnabled = false
-            trueButton.setVisibility(View.INVISIBLE);
-            falseButton.setVisibility(View.INVISIBLE);
+            if(quizViewModel.questionBank[quizViewModel.currentIndex].usedCheat==false) {
+                checkAnswer(true)
+                //falseButton.isEnabled = false
+                // trueButton.isEnabled = false
+                trueButton.setVisibility(View.INVISIBLE);
+                falseButton.setVisibility(View.INVISIBLE);
+            }
+            else{
+                Toast.makeText(this, R.string.judgment_toast, Toast.LENGTH_SHORT).show()
+            }
             }
 
         falseButton.setOnClickListener { view: View ->  //НАЖАТИЕ FALSE BUTTON
 // Что-то выполнить после нажатия
-            checkAnswer(false);
-           // falseButton.isEnabled = false;
-            //trueButton.isEnabled = false;
-            falseButton.setVisibility(View.INVISIBLE);
-            trueButton.setVisibility(View.INVISIBLE);
+            if (quizViewModel.questionBank[quizViewModel.currentIndex].usedCheat == false) {
+                checkAnswer(false);
+                // falseButton.isEnabled = false;
+                //trueButton.isEnabled = false;
+                falseButton.setVisibility(View.INVISIBLE);
+                trueButton.setVisibility(View.INVISIBLE);
             }
+            else{
+                Toast.makeText(this, R.string.judgment_toast, Toast.LENGTH_SHORT).show()}
+        }
 
         nextButton.setOnClickListener {     //НАЖАТИЕ NEXT BUTTON
             quizViewModel.moveToNext()
@@ -67,15 +77,32 @@ class MainActivity : AppCompatActivity() {
                 //nextButton.setVisibility(View.INVISIBLE);
             }
             updateQuestion() }
-
+        var cheatcount =0;
         cheatButton.setOnClickListener {
         // Начало CheatActivity
-            val answerIsTrue = quizViewModel.currentQuestionAnswer
-            val intent = CheatActivity.newIntent(this@MainActivity, answerIsTrue)
-            startActivityForResult(intent, REQUEST_CODE_CHEAT)
+            if (cheatcount<3) {
+                val answerIsTrue = quizViewModel.currentQuestionAnswer
+                val intent = CheatActivity.newIntent(this@MainActivity, answerIsTrue)
+                startActivityForResult(intent, REQUEST_CODE_CHEAT)
+                cheatcount++
+            }
+            else { Toast.makeText(this, "Too much cheating! ", Toast.LENGTH_SHORT).show()}
         }
 
         updateQuestion()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?)
+    {
+        super.onActivityResult(requestCode,
+            resultCode, data)
+        if (resultCode != Activity.RESULT_OK) {
+            return }
+
+        if (requestCode == REQUEST_CODE_CHEAT)
+        { quizViewModel.questionBank[quizViewModel.currentIndex].usedCheat  = data?.getBooleanExtra(EXTRA_ANSWER_SHOWN, false) ?: false
+            //quizViewModel.isCheater = data?.getBooleanExtra(EXTRA_ANSWER_SHOWN, false) ?: false
+        }
     }
     override fun onStart() {
         super.onStart()
@@ -96,8 +123,7 @@ class MainActivity : AppCompatActivity() {
         super.onSaveInstanceState(savedInstanceState)
         Log.i(TAG,
             "onSaveInstanceState")
-        savedInstanceState.putInt(KEY_INDEX,
-            quizViewModel.currentIndex)
+        savedInstanceState.putInt(KEY_INDEX, quizViewModel.currentIndex)
     }
 
 
@@ -118,9 +144,11 @@ class MainActivity : AppCompatActivity() {
     var results = 0;
     private fun checkAnswer(userAnswer: Boolean) {
         val correctAnswer = quizViewModel.currentQuestionAnswer;
-        val messageResId = if (userAnswer == correctAnswer) {
-            R.string.correct_toast
-        } else { R.string.incorrect_toast }
+        val messageResId = when {
+            quizViewModel.isCheater -> R.string.judgment_toast
+            userAnswer == correctAnswer -> R.string.correct_toast
+            else -> R.string.incorrect_toast
+        }
 
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show()
 
